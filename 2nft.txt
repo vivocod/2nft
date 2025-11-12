@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Device Spec Viewer — Lengkap</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#60a5fa;--glass: rgba(255,255,255,0.03)}
+    *{box-sizing:border-box}
+    body{font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; min-height:100vh; background:linear-gradient(180deg,#020617 0%, #071027 60%); color:#e6eef8}
+    header{padding:28px 20px; display:flex; gap:16px; align-items:center}
+    .logo{width:60px;height:60px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#7c3aed); display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 6px 18px rgba(8,10,20,0.6)}
+    .title h1{margin:0;font-size:20px}
+    .title p{margin:2px 0 0;color:var(--muted);font-size:13px}
+    .container{display:grid;grid-template-columns:360px 1fr;gap:20px;padding:20px}
+    .sidebar{background:var(--card);border-radius:14px;padding:18px;backdrop-filter:blur(6px);box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    .main{background:var(--card);border-radius:14px;padding:18px;min-height:60vh;overflow:auto}
+    .section{margin-bottom:14px}
+    .section h2{font-size:13px;margin:0 0 8px}
+    .kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,0.03)}
+    .kv .k{color:var(--muted);font-size:13px}
+    .kv .v{font-weight:600}
+    button{background:var(--accent);border:none;color: #021131;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer}
+    .mutebtn{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:6px 10px;border-radius:8px}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    pre{white-space:pre-wrap;word-break:break-word;background:var(--glass);padding:12px;border-radius:8px;color:var(--muted);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;font-size:13px}
+    footer{padding:18px;text-align:center;color:var(--muted);font-size:13px}
+    .chip{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.03);font-size:12px;margin-right:6px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    .flexrow{display:flex;gap:8px;align-items:center}
+    .badge{font-size:12px;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02);color:var(--muted)}
+    @media (max-width:900px){.container{grid-template-columns:1fr;}.sidebar{order:2}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">DS</div>
+    <div class="title">
+      <h1>Device Spec Viewer — Lengkap</h1>
+      <p>Tampilan spesifikasi perangkat secara real-time (browser-side).</p>
+    </div>
+    <div style="margin-left:auto;padding-right:20px;display:flex;gap:8px;align-items:center">
+      <button id="refreshBtn">Refresh</button>
+      <button class="mutebtn" id="exportJson">Export JSON</button>
+      <button class="mutebtn" id="copyBtn">Copy</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <aside class="sidebar">
+      <div class="section">
+        <h2>Ringkasan</h2>
+        <div class="kv"><div class="k">Browser</div><div class="v" id="bs_browser">—</div></div>
+        <div class="kv"><div class="k">OS / Platform</div><div class="v" id="bs_os">—</div></div>
+        <div class="kv"><div class="k">Screen</div><div class="v" id="bs_screen">—</div></div>
+        <div class="kv"><div class="k">CPU Cores</div><div class="v" id="bs_cores">—</div></div>
+        <div class="kv"><div class="k">Device Memory</div><div class="v" id="bs_memory">—</div></div>
+      </div>
+
+      <div class="section">
+        <h2>Kontrol</h2>
+        <div class="controls">
+          <button id="runAll">Jalankan Semua</button>
+          <button class="mutebtn" id="geoBtn">Minta Geolocation</button>
+          <button class="mutebtn" id="camBtn">Cek Kamera/Mic</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Fitur Tersedia</h2>
+        <div id="features"></div>
+      </div>
+
+      <div class="section">
+        <h2>Waktu / Zona</h2>
+        <div class="kv"><div class="k">Timezone</div><div class="v" id="tz">—</div></div>
+        <div class="kv"><div class="k">Bahasa</div><div class="v" id="langs">—</div></div>
+      </div>
+
+      <footer>
+        <div>Built with ❤️ — sisi klien saja</div>
+      </footer>
+    </aside>
+
+    <main class="main">
+      <div class="section">
+        <h2>Detail Lengkap</h2>
+        <div class="grid">
+          <div>
+            <h3 style="margin:8px 0 6px">Browser & Engine</h3>
+            <pre id="out_browser">—</pre>
+          </div>
+
+          <div>
+            <h3 style="margin:8px 0 6px">Hardware</h3>
+            <pre id="out_hardware">—</pre>
+          </div>
+
+          <div>
+            <h3 style="margin:8px 0 6px">Screen & Display</h3>
+            <pre id="out_screen">—</pre>
+          </div>
+
+          <div>
+            <h3 style="margin:8px 0 6px">Network & Connection</h3>
+            <pre id="out_network">—</pre>
+          </div>
+
+          <div>
+            <h3 style="margin:8px 0 6px">Battery</h3>
+            <pre id="out_battery">—</pre>
+          </div>
+
+          <div>
+            <h3 style="margin:8px 0 6px">Media Devices</h3>
+            <pre id="out_media">—</pre>
+          </div>
+
+          <div style="grid-column:1/3">
+            <h3 style="margin:8px 0 6px">Raw JSON</h3>
+            <pre id="out_json">—</pre>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+<script>
+(async function(){
+  // Helper
+  const $ = id => document.getElementById(id);
+  const supports = (name) => (name in navigator) || (name in window);
+
+  // Data container
+  let data = { timestamp: new Date().toISOString() };
+
+  function safe(fn, fallback='—'){
+    try{const v=fn(); return (v===undefined||v===null||v==='')?fallback:v}catch(e){return fallback}
+  }
+
+  // Basic snapshot
+  function collectBasic(){
+    data.timestamp = new Date().toISOString();
+    data.userAgent = navigator.userAgent || '—';
+    data.userAgentData = navigator.userAgentData ? {
+      brands: navigator.userAgentData.brands || navigator.userAgentData.uaList,
+      mobile: navigator.userAgentData.mobile,
+      platform: navigator.userAgentData.platform
+    } : null;
+
+    data.platform = navigator.platform || '—';
+    data.vendor = navigator.vendor || '—';
+    data.cookieEnabled = navigator.cookieEnabled;
+    data.javaEnabled = navigator.javaEnabled ? navigator.javaEnabled() : false;
+    data.languages = navigator.languages || [navigator.language || '—'];
+    data.hardwareConcurrency = navigator.hardwareConcurrency || null;
+    data.deviceMemory = navigator.deviceMemory || null; // GB, may be undefined
+    data.cookie = document.cookie || '';
+
+    // Storage availability quick test
+    data.storage = {
+      local: typeof localStorage !== 'undefined',
+      session: typeof sessionStorage !== 'undefined'
+    };
+
+    data.screen = {
+      width: screen.width, height: screen.height, availWidth: screen.availWidth, availHeight: screen.availHeight,
+      colorDepth: screen.colorDepth, pixelDepth: screen.pixelDepth
+    };
+
+    data.pixelRatio = window.devicePixelRatio || 1;
+    data.orientation = screen.orientation ? {type: screen.orientation.type,angle: screen.orientation.angle} : null;
+
+    data.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || '—';
+
+    try{
+      data.canvasWebGL = (function(){
+        const c=document.createElement('canvas');
+        const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+        if(!gl) return null;
+        const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+        return {
+          vendor: dbg ? gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) : null,
+          renderer: dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : null
+        }
+      })();
+    }catch(e){data.canvasWebGL = null}
+
+    // Cookies test (we'll try to set one short-lived cookie)
+    try{document.cookie = "__ds_test=1; max-age=5"; data.cookiesSet = document.cookie.indexOf('__ds_test=1')!==-1}catch(e){data.cookiesSet=false}
+
+    // Permissions fallback
+    data.permissions = {};
+    const perms = ['geolocation','microphone','camera','notifications','persistent-storage','clipboard-read','clipboard-write'];
+    if(navigator.permissions){
+      await Promise.all(perms.map(async p=>{
+        try{const r = await navigator.permissions.query({name:p}); data.permissions[p]=r.state}catch(e){data.permissions[p]='unknown'}
+      }));
+    }
+
+    // Navigator connection
+    data.connection = navigator.connection ? {
+      effectiveType: navigator.connection.effectiveType,
+      downlink: navigator.connection.downlink,
+      rtt: navigator.connection.rtt,
+      saveData: navigator.connection.saveData
+    } : null;
+
+    // Navigator online
+    data.onLine = navigator.onLine;
+
+    // Media devices placeholder
+    data.mediaDevices = null;
+
+    // Battery placeholder
+    data.battery = null;
+
+    // Geolocation placeholder
+    data.geolocation = null;
+
+    // Features list
+    data.features = {
+      serviceWorker: 'serviceWorker' in navigator,
+      bluetooth: 'bluetooth' in navigator,
+      usb: 'usb' in navigator,
+      vibration: 'vibrate' in navigator,
+      webRTC: 'RTCPeerConnection' in window,
+      push: 'PushManager' in window,
+      webGL: !!data.canvasWebGL
+    };
+
+    return data;
+  }
+
+  async function collectMediaDevices(){
+    try{
+      if(!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return data.mediaDevices = [];
+      const list = await navigator.mediaDevices.enumerateDevices();
+      data.mediaDevices = list.map(d=>({kind:d.kind, label: d.label || '', deviceId: d.deviceId, groupId: d.groupId}));
+    }catch(e){data.mediaDevices = []}
+  }
+
+  async function collectBattery(){
+    try{
+      if(!navigator.getBattery) return data.battery = null;
+      const b = await navigator.getBattery();
+      data.battery = {charging: b.charging, chargingTime: b.chargingTime, level: b.level, dischargingTime: b.dischargingTime};
+      // subscribe for updates
+      b.addEventListener('chargingchange', ()=> updateUI());
+      b.addEventListener('levelchange', ()=> updateUI());
+    }catch(e){data.battery=null}
+  }
+
+  function showFeatures(){
+    const el = $('features'); el.innerHTML='';
+    for(const k in data.features){
+      const div = document.createElement('div'); div.className='chip'; div.textContent = `${k} : ${data.features[k] ? '✓' : '—'}`; el.appendChild(div);
+    }
+  }
+
+  function fillSummary(){
+    $('bs_browser').textContent = safe(()=>navigator.userAgentData? (navigator.userAgentData.brands? navigator.userAgentData.brands.map(b=>b.brand+' '+b.version).join(', '): navigator.userAgentData.uaList.map(b=>b.brand+' '+b.version).join(', ')) : navigator.userAgent);
+    $('bs_os').textContent = safe(()=>navigator.userAgentData? navigator.userAgentData.platform : navigator.platform);
+    $('bs_screen').textContent = `${screen.width}×${screen.height} @ ${window.devicePixelRatio||1}x`;
+    $('bs_cores').textContent = data.hardwareConcurrency || '—';
+    $('bs_memory').textContent = data.deviceMemory ? data.deviceMemory + ' GB' : '—';
+    $('tz').textContent = data.timezone;
+    $('langs').textContent = data.languages.join(', ');
+  }
+
+  function pretty(obj, opts){
+    try{return JSON.stringify(obj, null, 2)}catch(e){return String(obj)}
+  }
+
+  function updateUI(){
+    $('out_json').textContent = pretty(data);
+
+    $('out_browser').textContent = pretty({ ua: data.userAgent, uaData: data.userAgentData, vendor: data.vendor, platform: data.platform, languages: data.languages });
+    $('out_hardware').textContent = pretty({hardwareConcurrency: data.hardwareConcurrency, deviceMemory: data.deviceMemory, canvasWebGL: data.canvasWebGL, platform: data.platform, cookieEnabled: data.cookieEnabled});
+    $('out_screen').textContent = pretty({screen: data.screen, pixelRatio: data.pixelRatio, orientation: data.orientation, colorDepth: data.screen.colorDepth});
+    $('out_network').textContent = pretty({connection: data.connection, onLine: data.onLine});
+    $('out_battery').textContent = pretty(data.battery || 'Battery API not available');
+    $('out_media').textContent = pretty(data.mediaDevices || 'mediaDevices API not available or device permission not granted');
+
+    showFeatures();
+    fillSummary();
+  }
+
+  async function runAll(){
+    await collectBasic();
+    await collectMediaDevices();
+    await collectBattery();
+    updateUI();
+  }
+
+  // Button handlers
+  $('refreshBtn').addEventListener('click', async ()=>{ await runAll(); });
+  $('runAll').addEventListener('click', async ()=>{ await runAll(); });
+
+  $('copyBtn').addEventListener('click', ()=>{ navigator.clipboard?.writeText(JSON.stringify(data, null, 2)).then(()=>alert('Tersalin ke clipboard')).catch(()=>alert('Gagal menyalin')) });
+  $('exportJson').addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='device-specs.json'; a.click(); URL.revokeObjectURL(url);
+  });
+
+  // Geolocation explicit
+  $('geoBtn').addEventListener('click', ()=>{
+    if(!navigator.geolocation){ alert('Geolocation tidak tersedia di browser ini'); return }
+    navigator.geolocation.getCurrentPosition(pos=>{
+      data.geolocation = {lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy, timestamp: pos.timestamp};
+      updateUI();
+    }, err=>{ alert('Gagal mendapatkan geolocation: '+err.message) })
+  });
+
+  // Check camera microphone by requesting permission (no stream kept)
+  $('camBtn').addEventListener('click', async ()=>{
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ alert('Media API tidak tersedia'); return }
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true, video:true});
+      // release tracks quickly
+      stream.getTracks().forEach(t=>t.stop());
+      alert('Izin kamera & mikrofon diberikan (stream segera dihentikan). Perangkat terdaftar akan muncul di Media Devices.');
+      await collectMediaDevices(); updateUI();
+    }catch(e){alert('Izin ditolak atau perangkat tidak tersedia: '+e.message)}
+  });
+
+  // On load run minimal collection
+  await runAll();
+
+  // Auto-updates for some live things
+  window.addEventListener('online', ()=>{ data.onLine=true; updateUI(); });
+  window.addEventListener('offline', ()=>{ data.onLine=false; updateUI(); });
+
+})();
+</script>
+</body>
+</html>
